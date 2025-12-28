@@ -6,10 +6,16 @@
 // writers are not. Change the code to make this thread safe.
 //
 
+/*
+Dalam go, variable yang dipakai bersamaan harus dikunci agar hasil tidak liar.
+untuk itu variable harus dikuci dengan MUTEX.
+*/
+
 package main
 
 import (
 	"container/list"
+	"sync"
 	"testing"
 )
 
@@ -32,6 +38,7 @@ type KeyStoreCache struct {
 	cache map[string]*list.Element
 	pages list.List
 	load  func(string) string
+	mu    sync.Mutex
 }
 
 // New creates a new KeyStoreCache
@@ -44,6 +51,9 @@ func New(load KeyStoreCacheLoader) *KeyStoreCache {
 
 // Get gets the key from cache, loads it from the source if needed
 func (k *KeyStoreCache) Get(key string) string {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
 	if e, ok := k.cache[key]; ok {
 		k.pages.MoveToFront(e)
 		return e.Value.(page).Value

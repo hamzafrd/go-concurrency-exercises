@@ -13,10 +13,33 @@
 
 package main
 
+import (
+	"fmt"
+	"os"
+	"os/signal"
+)
+
 func main() {
 	// Create a process
 	proc := MockProcess{}
+	go proc.Run()
+
+	sigCount := 0
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
 
 	// Run the process (blocking)
-	proc.Run()
+	for {
+		<-sigCh
+		sigCount++
+
+		if sigCount == 1 {
+			fmt.Println("\nSIGINT received: trying graceful shutdown")
+			go proc.Stop()
+		} else {
+			fmt.Println("\nSIGINT received again: force exit")
+			os.Exit(1)
+		}
+	}
+
 }
